@@ -93,6 +93,14 @@
       color: var(--primary-dark);
     }
 
+    }
+
+    #issueTitleDisplay {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
     #stepNav {
       display: flex;
       flex-wrap: wrap;
@@ -273,6 +281,11 @@
           <input id="excelFile" type="file" accept=".xlsx,.xls" />
         </div>
         <div>
+          <div class="search-panel">
+            <label for="issueSearch">Search Issues</label>
+            <input id="issueSearch" type="text" placeholder="Search issues..." autocomplete="off" />
+            <ul id="searchResults" class="search-results" aria-label="Issue search results"></ul>
+          </div>
           <label for="issueSelect">Issue</label>
           <select id="issueSelect"></select>
         </div>
@@ -313,12 +326,28 @@
 
   <script>
     const defaultRows = [
-      { Issue: "Outlook fails to send/receive", "Step No": 1, Title: "Verify connectivity", Instruction: "Confirm user has internet access and can browse external websites.", "Next Step": 2, Escalate: "No" },
-      { Issue: "Outlook fails to send/receive", "Step No": 2, Title: "Restart Outlook", Instruction: "Close Outlook completely and reopen. Verify mailbox sync resumes.", "Next Step": 3, Escalate: "No" },
-      { Issue: "Outlook fails to send/receive", "Step No": 3, Title: "Repair account profile", Instruction: "In Control Panel > Mail, run account repair and test send/receive.", "Next Step": "", Escalate: "Yes" }
+      { Issue: "Outlook fails to send/receive", Category: "Mail Flow", "Step No": 1, Title: "Verify connectivity", Instruction: "Confirm user has internet access and can browse external websites.", "Next Step": 2, Escalate: "No" },
+      { Issue: "Outlook fails to send/receive", Category: "Mail Flow", "Step No": 2, Title: "Restart Outlook", Instruction: "Close Outlook completely and reopen. Verify mailbox sync resumes.", "Next Step": 3, Escalate: "No" },
+      { Issue: "Outlook fails to send/receive", Category: "Mail Flow", "Step No": 3, Title: "Repair account profile", Instruction: "In Control Panel > Mail, run account repair and test send/receive.", "Next Step": "", Escalate: "Yes" },
+
+      { Issue: "Outlook Not Opening", Category: "Launch", "Step No": 1, Title: "Launch in safe mode", Instruction: "STEP: Press Win + R\nSTEP: Type outlook.exe /safe and press Enter", "Next Step": 2, Escalate: "No" },
+      { Issue: "Outlook Not Opening", Category: "Launch", "Step No": 2, Title: "Disable problematic add-ins", Instruction: "Open File > Options > Add-ins and disable COM add-ins one by one.", "Next Step": "", Escalate: "Yes" },
+
+      { Issue: "Emails Not Sending", Category: "Mail Flow", "Step No": 1, Title: "Check Outbox and connectivity", Instruction: "Confirm message is not stuck in Outbox and internet is stable.", "Next Step": 2, Escalate: "No" },
+      { Issue: "Emails Not Sending", Category: "Mail Flow", "Step No": 2, Title: "Re-authenticate account", Instruction: "Remove stored credential and sign in again to refresh token.", "Next Step": "", Escalate: "Yes" },
+
+      { Issue: "Emails Not Receiving", Category: "Mail Flow", "Step No": 1, Title: "Validate sync and filters", Instruction: "Check focused inbox, rules, and sync settings for the mailbox.", "Next Step": 2, Escalate: "No" },
+      { Issue: "Emails Not Receiving", Category: "Mail Flow", "Step No": 2, Title: "Test in web outlook", Instruction: "Sign in to Outlook Web and verify if new mail appears there.", "Next Step": "", Escalate: "Yes" },
+
+      { Issue: "Outlook Slow Performance", Category: "Performance", "Step No": 1, Title: "Measure profile/add-in impact", Instruction: "Run Outlook in safe mode and compare responsiveness.", "Next Step": 2, Escalate: "No" },
+      { Issue: "Outlook Slow Performance", Category: "Performance", "Step No": 2, Title: "Reduce cached footprint", Instruction: "Lower cached mail duration and archive large folders.", "Next Step": "", Escalate: "Yes" },
+
+      { Issue: "Authentication Prompt Loop", Category: "Authentication", "Step No": 1, Title: "Clear stale credentials", Instruction: "Open Credential Manager and remove Microsoft 365/Outlook tokens.", "Next Step": 2, Escalate: "No" },
+      { Issue: "Authentication Prompt Loop", Category: "Authentication", "Step No": 2, Title: "Reset sign-in context", Instruction: "Close Office apps, run cmdkey /list to review creds, then re-open Outlook and sign in.", "Next Step": "", Escalate: "Yes" }
     ];
 
     let tree = {};
+    let allIssues = [];
     let currentIssue = "";
     let currentStepNo = null;
     let visitedSteps = [];
@@ -326,6 +355,9 @@
 
     const el = {
       excelFile: document.getElementById("excelFile"),
+      commonIssues: document.getElementById("commonIssues"),
+      issueSearch: document.getElementById("issueSearch"),
+      searchResults: document.getElementById("searchResults"),
       issueSelect: document.getElementById("issueSelect"),
       issueTitleDisplay: document.getElementById("issueTitleDisplay"),
       stepNav: document.getElementById("stepNav"),
@@ -618,10 +650,13 @@
       issues.forEach((issue) => {
         const option = document.createElement("option");
         option.value = issue;
+        option.textContent = `${issue} (${issueCategory(issue)})`;
         option.textContent = issue;
         el.issueSelect.appendChild(option);
       });
       startIssue(issues[0] || "");
+      el.issueSearch.value = issues[0] || "";
+      renderSearchResults("");
     }
 
     async function handleFileUpload(file) {
