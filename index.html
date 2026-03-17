@@ -54,40 +54,9 @@ button:active {transform:scale(0.95);}
 .btn-success {background:#16a34a;}
 .btn-back {background:#64748b;}
 
-.search-results {
-  position:absolute;
-  background:white;
-  border:1px solid #cbd5e1;
-  max-height:200px;
-  overflow:auto;
-  display:none;
-  width:100%;
-  z-index:10;
-  border-radius:10px;
-}
-
-.search-results.visible {display:block;}
-
-.search-results li {
-  padding:8px;
-  cursor:pointer;
-}
-.search-results li:hover {
-  background:#eaf3ff;
-}
-
-.common {
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-}
-
 .common button {
   background:#eaf3ff;
   color:#1e40af;
-  border-radius:20px;
-  padding:6px 12px;
-  font-size:12px;
 }
 
 .step {
@@ -103,27 +72,17 @@ button:active {transform:scale(0.95);}
   to {opacity:1;}
 }
 
-.pills {
-  margin-top:8px;
-}
-
 .pill {
   display:inline-block;
-  background:#eff6ff;
   padding:6px 12px;
   border-radius:20px;
+  background:#eff6ff;
   margin:2px;
-  font-size:12px;
 }
 
 .pill.active {
   background:#2563eb;
   color:white;
-}
-
-.status {
-  margin-top:10px;
-  font-weight:bold;
 }
 </style>
 </head>
@@ -140,7 +99,7 @@ button:active {transform:scale(0.95);}
 
 <div class="card">
 <input id="search" placeholder="Search issues...">
-<ul id="results" class="search-results"></ul>
+<select id="issue"></select>
 
 <div class="common">
 <button onclick="quick('Outlook Not Opening')">Outlook Not Opening</button>
@@ -149,16 +108,13 @@ button:active {transform:scale(0.95);}
 <button onclick="quick('Outlook Slow Performance')">Slow Performance</button>
 <button onclick="quick('Authentication Prompt Loop')">Auth Loop</button>
 </div>
-
-<select id="issue"></select>
 </div>
 
 <div class="card">
 <h2 id="issueTitle"></h2>
-<div id="pills" class="pills"></div>
+<div id="pills"></div>
 <h3 id="stepTitle"></h3>
 <div id="steps"></div>
-<div id="status" class="status"></div>
 </div>
 
 <div class="card">
@@ -178,19 +134,6 @@ button:active {transform:scale(0.95);}
 
 let tree={},issue="",stepNo=0,visited=[],status="";
 
-const el={
-file:document.getElementById("file"),
-search:document.getElementById("search"),
-results:document.getElementById("results"),
-issueSelect:document.getElementById("issue"),
-issueTitle:document.getElementById("issueTitle"),
-stepTitle:document.getElementById("stepTitle"),
-steps:document.getElementById("steps"),
-summary:document.getElementById("summary"),
-pills:document.getElementById("pills"),
-status:document.getElementById("status")
-};
-
 function buildTree(rows){
   let map={};
   rows.forEach(r=>{
@@ -204,7 +147,7 @@ function buildTree(rows){
       title:r.Title,
       instruction:r.Instruction,
       next:Number(r["Next Step"]),
-      escalate:r.Escalate==="Yes"
+      escalate:String(r.Escalate).toLowerCase()==="yes"
     };
   });
 
@@ -230,28 +173,29 @@ function quick(name){
 function render(){
   let step=tree[issue].steps[stepNo];
 
-  el.issueTitle.textContent=issue;
-  el.stepTitle.textContent=step.title;
+  document.getElementById("issueTitle").innerText=issue;
+  document.getElementById("stepTitle").innerText=step.title;
 
-  el.steps.innerHTML="";
+  let container=document.getElementById("steps");
+  container.innerHTML="";
+
   step.instruction.split("\n").forEach(s=>{
     let div=document.createElement("div");
     div.className="step";
-    div.textContent=s.replace("STEP:","");
-    el.steps.appendChild(div);
+    div.innerText=s.replace("STEP:","");
+    container.appendChild(div);
   });
 
-  el.pills.innerHTML="";
+  let pills=document.getElementById("pills");
+  pills.innerHTML="";
   tree[issue].order.forEach(s=>{
     let p=document.createElement("span");
     p.className="pill"+(s===stepNo?" active":"");
-    p.textContent="Step "+s;
-    el.pills.appendChild(p);
+    p.innerText="Step "+s;
+    pills.appendChild(p);
   });
 
-  el.status.textContent=status;
-
-  el.summary.value=
+  document.getElementById("summary").value=
 `Issue: ${issue}
 
 Steps Taken:
@@ -285,40 +229,42 @@ document.getElementById("back").onclick=()=>{
   }
 };
 
-el.search.oninput=()=>{
-  let q=el.search.value.toLowerCase();
-  el.results.innerHTML="";
+document.getElementById("search").oninput=(e)=>{
+  let q=e.target.value.toLowerCase();
+  let dropdown=document.getElementById("issue");
+  dropdown.innerHTML="";
   Object.keys(tree)
     .filter(i=>i.toLowerCase().includes(q))
     .forEach(i=>{
-      let li=document.createElement("li");
-      li.textContent=i;
-      li.onclick=()=>loadIssue(i);
-      el.results.appendChild(li);
+      let o=document.createElement("option");
+      o.value=i;
+      o.textContent=i;
+      dropdown.appendChild(o);
     });
-  el.results.classList.add("visible");
 };
 
-el.issueSelect.onchange=e=>loadIssue(e.target.value);
+document.getElementById("issue").onchange=(e)=>loadIssue(e.target.value);
 
-el.file.onchange=async(e)=>{
+document.getElementById("file").onchange=async(e)=>{
   let data=await e.target.files[0].arrayBuffer();
   let wb=XLSX.read(data);
   let ws=wb.Sheets[wb.SheetNames[0]];
   let rows=XLSX.utils.sheet_to_json(ws);
+
   tree=buildTree(rows);
 
-  el.issueSelect.innerHTML="";
+  let dropdown=document.getElementById("issue");
+  dropdown.innerHTML="";
   Object.keys(tree).forEach(i=>{
     let o=document.createElement("option");
     o.value=i;
     o.textContent=i;
-    el.issueSelect.appendChild(o);
+    dropdown.appendChild(o);
   });
 };
 
 document.getElementById("copy").onclick=()=>{
-  navigator.clipboard.writeText(el.summary.value);
+  navigator.clipboard.writeText(document.getElementById("summary").value);
 };
 
 </script>
