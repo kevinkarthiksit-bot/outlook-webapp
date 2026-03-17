@@ -1,273 +1,209 @@
-<!-- CLEAN FINAL VERSION -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Outlook Guided Resolution</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M365 Outlook Guided Resolution</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-:root {
-  --bg:#f4f8ff;
-  --card:#fff;
-  --primary:#2563eb;
-  --success:#16a34a;
-  --text:#1e293b;
-}
-
-body{
+body {
   margin:0;
-  font-family:Segoe UI;
-  background:var(--bg);
+  font-family:"Segoe UI";
+  background:#f4f8ff;
 }
 
-.container{
+.container {
   max-width:1100px;
   margin:auto;
   padding:20px;
 }
 
-.card{
-  background:#fff;
+.card {
+  background:white;
+  border-radius:14px;
   padding:16px;
-  border-radius:12px;
   margin-bottom:12px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.08);
 }
 
-input,select,textarea{
+h1 {color:#1e40af;}
+
+input,select,textarea {
   width:100%;
   padding:10px;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-
-button{
-  padding:10px 14px;
-  border:none;
-  border-radius:20px;
-  color:#fff;
-  cursor:pointer;
-}
-
-.btn-primary{background:#2563eb;}
-.btn-success{background:#16a34a;}
-.btn-back{background:#64748b;}
-
-.search-results{
-  background:#fff;
-  border:1px solid #ccc;
-  display:none;
-  position:absolute;
-  width:100%;
-  max-height:200px;
-  overflow:auto;
-}
-
-.search-results.visible{display:block;}
-
-.issue-card{
-  background:#eef5ff;
-  padding:8px;
   border-radius:10px;
-  margin:4px;
-  cursor:pointer;
-}
-
-:root {
-  --bg: #f4f8ff;
-  --card: #ffffff;
-  --primary: #2563eb;
-  --primary-dark: #1e40af;
-  --success: #16a34a;
-  --text: #1e293b;
-  --muted: #64748b;
-  --border: #dbeafe;
-  --shadow: 0 10px 24px rgba(37, 99, 235, 0.1);
-}
-
-body {
-  margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: linear-gradient(135deg, #f8fbff, var(--bg));
-  color: var(--text);
-}
-
-.container {
-  max-width: 1100px;
-  margin: auto;
-  padding: 20px;
-}
-
-.card {
-  background: var(--card);
-  padding: 16px;
-  border-radius: 16px;
-  margin-bottom: 12px;
-  box-shadow: var(--shadow);
-  transition: transform 0.2s ease;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-}
-
-input, select, textarea {
-  width: 100%;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
+  border:1px solid #cbd5e1;
 }
 
 button {
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: none;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  padding:10px 16px;
+  border:none;
+  border-radius:20px;
+  color:white;
+  cursor:pointer;
+  margin:4px;
+  transition:0.2s;
 }
 
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
-}
+button:hover {transform:translateY(-1px);}
+button:active {transform:scale(0.95);}
 
-button:active {
-  transform: scale(0.96);
-}
-
-.btn-primary { background: var(--primary); }
-.btn-success { background: var(--success); }
-.btn-back { background: #64748b; }
-
-.step-pill {
-  display: inline-block;
-  padding: 6px 12px;
-  margin: 4px;
-  border-radius: 999px;
-  background: #eff6ff;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.step-pill.active {
-  background: var(--primary);
-  color: white;
-}
-
-.instruction-box {
-  margin-top: 10px;
-  display: grid;
-  gap: 8px;
-}
-
-.instruction-step {
-  background: #eaf3ff;
-  padding: 10px;
-  border-radius: 10px;
-  animation: fadeIn 0.3s ease;
-}
+.btn-primary {background:#2563eb;}
+.btn-success {background:#16a34a;}
+.btn-back {background:#64748b;}
 
 .search-results {
-  position: absolute;
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  max-height: 200px;
-  overflow: auto;
-  display: none;
+  position:absolute;
+  background:white;
+  border:1px solid #cbd5e1;
+  max-height:200px;
+  overflow:auto;
+  display:none;
+  width:100%;
+  z-index:10;
+  border-radius:10px;
 }
 
-.search-results.visible {
-  display: block;
-}
+.search-results.visible {display:block;}
 
 .search-results li {
-  padding: 8px;
-  cursor: pointer;
+  padding:8px;
+  cursor:pointer;
 }
-
 .search-results li:hover {
-  background: #eff6ff;
+  background:#eaf3ff;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+.common {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
 }
+
+.common button {
+  background:#eaf3ff;
+  color:#1e40af;
+  border-radius:20px;
+  padding:6px 12px;
+  font-size:12px;
+}
+
+.step {
+  background:#eaf3ff;
+  padding:10px;
+  border-radius:10px;
+  margin-top:6px;
+  animation:fade 0.3s ease;
+}
+
+@keyframes fade {
+  from {opacity:0; transform:translateY(5px);}
+  to {opacity:1;}
+}
+
+.pills {
+  margin-top:8px;
+}
+
+.pill {
+  display:inline-block;
+  background:#eff6ff;
+  padding:6px 12px;
+  border-radius:20px;
+  margin:2px;
+  font-size:12px;
+}
+
+.pill.active {
+  background:#2563eb;
+  color:white;
+}
+
+.status {
+  margin-top:10px;
+  font-weight:bold;
+}
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-<h1>Outlook Guided Resolution</h1>
+<h1>M365 Outlook Guided Resolution</h1>
 
 <div class="card">
-<input id="excelFile" type="file"/>
+<input id="file" type="file">
 </div>
 
 <div class="card">
-<input id="issueSearch" placeholder="Search issues..."/>
-<ul id="searchResults" class="search-results"></ul>
+<input id="search" placeholder="Search issues...">
+<ul id="results" class="search-results"></ul>
 
-<select id="issueSelect"></select>
+<div class="common">
+<button onclick="quick('Outlook Not Opening')">Outlook Not Opening</button>
+<button onclick="quick('Emails Not Sending')">Emails Not Sending</button>
+<button onclick="quick('Emails Not Receiving')">Emails Not Receiving</button>
+<button onclick="quick('Outlook Slow Performance')">Slow Performance</button>
+<button onclick="quick('Authentication Prompt Loop')">Auth Loop</button>
+</div>
+
+<select id="issue"></select>
 </div>
 
 <div class="card">
-<h2 id="issueTitleDisplay"></h2>
-<div id="stepNav"></div>
-</div>
-
-<div class="card">
+<h2 id="issueTitle"></h2>
+<div id="pills" class="pills"></div>
 <h3 id="stepTitle"></h3>
-<div id="stepInstruction"></div>
-
-<button id="btnResolved" class="btn-success">Resolved</button>
-<button id="btnContinue" class="btn-primary">Continue</button>
-<button id="btnBack" class="btn-back">Back</button>
+<div id="steps"></div>
+<div id="status" class="status"></div>
 </div>
 
 <div class="card">
-<textarea id="summaryText"></textarea>
-<button id="btnCopySummary">Copy Summary</button>
+<button id="continue" class="btn-primary">Continue</button>
+<button id="resolved" class="btn-success">Resolved</button>
+<button id="back" class="btn-back">Back</button>
+</div>
+
+<div class="card">
+<textarea id="summary"></textarea>
+<button id="copy">Copy Summary</button>
 </div>
 
 </div>
 
 <script>
 
-let tree={},currentIssue="",currentStepNo=null,visitedSteps=[];
+let tree={},issue="",stepNo=0,visited=[],status="";
 
 const el={
-excelFile:document.getElementById("excelFile"),
-issueSearch:document.getElementById("issueSearch"),
-searchResults:document.getElementById("searchResults"),
-issueSelect:document.getElementById("issueSelect"),
-issueTitleDisplay:document.getElementById("issueTitleDisplay"),
+file:document.getElementById("file"),
+search:document.getElementById("search"),
+results:document.getElementById("results"),
+issueSelect:document.getElementById("issue"),
+issueTitle:document.getElementById("issueTitle"),
 stepTitle:document.getElementById("stepTitle"),
-stepInstruction:document.getElementById("stepInstruction"),
-summaryText:document.getElementById("summaryText")
+steps:document.getElementById("steps"),
+summary:document.getElementById("summary"),
+pills:document.getElementById("pills"),
+status:document.getElementById("status")
 };
 
 function buildTree(rows){
-  const map={};
-
+  let map={};
   rows.forEach(r=>{
-    const issue=r.Issue;
-    const stepNo=Number(r["Step No"]);
-    if(!issue||!stepNo)return;
+    let i=r.Issue;
+    let s=Number(r["Step No"]);
+    if(!i||!s)return;
 
-    if(!map[issue])map[issue]={steps:{},order:[]};
+    if(!map[i])map[i]={steps:{},order:[]};
 
-    map[issue].steps[stepNo]={
-      stepNo,
+    map[i].steps[s]={
       title:r.Title,
       instruction:r.Instruction,
-      nextStep:Number(r["Next Step"]),
+      next:Number(r["Next Step"]),
       escalate:r.Escalate==="Yes"
     };
   });
@@ -279,74 +215,110 @@ function buildTree(rows){
   return map;
 }
 
-function renderIssueList(){
-  el.issueSelect.innerHTML="";
-  Object.keys(tree).forEach(issue=>{
-    const o=document.createElement("option");
-    o.value=issue;
-    o.textContent=issue;
-    el.issueSelect.appendChild(o);
-  });
+function loadIssue(i){
+  issue=i;
+  stepNo=tree[i].order[0];
+  visited=[stepNo];
+  status="";
+  render();
 }
 
-function startIssue(issue){
-  currentIssue=issue;
-  currentStepNo=tree[issue].order[0];
-  visitedSteps=[currentStepNo];
-  function render() {   const step = tree[currentIssue].steps[currentStepNo];    el.issueTitleDisplay.textContent = currentIssue;    const container = document.getElementById("stepInstruction");   container.innerHTML = "";    const parts = step.instruction.split("
-");    parts.forEach(p => {     const div = document.createElement("div");     div.className = "instruction-step";     div.textContent = p.replace("STEP:", "");     container.appendChild(div);   });    el.stepTitle.textContent = step.title;    el.summaryText.value =     `Issue: ${currentIssue}
-Steps Taken:
-` +     visitedSteps.map((s,i)=>`${i+1}. Step ${s}`).join("
-"); };
+function quick(name){
+  if(tree[name]) loadIssue(name);
 }
 
-function function render() {   const step = tree[currentIssue].steps[currentStepNo];    el.issueTitleDisplay.textContent = currentIssue;    const container = document.getElementById("stepInstruction");   container.innerHTML = "";    const parts = step.instruction.split("
-");    parts.forEach(p => {     const div = document.createElement("div");     div.className = "instruction-step";     div.textContent = p.replace("STEP:", "");     container.appendChild(div);   });    el.stepTitle.textContent = step.title;    el.summaryText.value =     `Issue: ${currentIssue}
-Steps Taken:
-` +     visitedSteps.map((s,i)=>`${i+1}. Step ${s}`).join("
-"); }{
-  const step=tree[currentIssue].steps[currentStepNo];
-  el.issueTitleDisplay.textContent=currentIssue;
+function render(){
+  let step=tree[issue].steps[stepNo];
+
+  el.issueTitle.textContent=issue;
   el.stepTitle.textContent=step.title;
-  el.stepInstruction.textContent=step.instruction;
 
-  el.summaryText.value=`Issue: ${currentIssue}\nSteps: ${visitedSteps.join(",")}`;
+  el.steps.innerHTML="";
+  step.instruction.split("\n").forEach(s=>{
+    let div=document.createElement("div");
+    div.className="step";
+    div.textContent=s.replace("STEP:","");
+    el.steps.appendChild(div);
+  });
+
+  el.pills.innerHTML="";
+  tree[issue].order.forEach(s=>{
+    let p=document.createElement("span");
+    p.className="pill"+(s===stepNo?" active":"");
+    p.textContent="Step "+s;
+    el.pills.appendChild(p);
+  });
+
+  el.status.textContent=status;
+
+  el.summary.value=
+`Issue: ${issue}
+
+Steps Taken:
+${visited.map((s,i)=>`${i+1}. Step ${s}`).join("\n")}
+
+Status: ${status||"In Progress"}`;
 }
 
-document.getElementById("btnContinue").onclick=()=>{
-  const step=tree[currentIssue].steps[currentStepNo];
-  if(step.nextStep){
-    currentStepNo=step.nextStep;
-    visitedSteps.push(currentStepNo);
-    function render() {   const step = tree[currentIssue].steps[currentStepNo];    el.issueTitleDisplay.textContent = currentIssue;    const container = document.getElementById("stepInstruction");   container.innerHTML = "";    const parts = step.instruction.split("
-");    parts.forEach(p => {     const div = document.createElement("div");     div.className = "instruction-step";     div.textContent = p.replace("STEP:", "");     container.appendChild(div);   });    el.stepTitle.textContent = step.title;    el.summaryText.value =     `Issue: ${currentIssue}
-Steps Taken:
-` +     visitedSteps.map((s,i)=>`${i+1}. Step ${s}`).join("
-"); };
+document.getElementById("continue").onclick=()=>{
+  let step=tree[issue].steps[stepNo];
+  if(step.next){
+    stepNo=step.next;
+    visited.push(stepNo);
+    render();
+  } else {
+    status="Escalate to Tier 2";
+    render();
   }
 };
 
-el.issueSearch.oninput=()=>{
-  const q=el.issueSearch.value.toLowerCase();
-  el.searchResults.innerHTML="";
-  Object.keys(tree).filter(i=>i.toLowerCase().includes(q)).forEach(i=>{
-    const li=document.createElement("li");
-    li.textContent=i;
-    li.onclick=()=>startIssue(i);
-    el.searchResults.appendChild(li);
-  });
-  el.searchResults.classList.add("visible");
+document.getElementById("resolved").onclick=()=>{
+  status="Resolved";
+  render();
 };
 
-el.issueSelect.onchange=e=>startIssue(e.target.value);
+document.getElementById("back").onclick=()=>{
+  if(visited.length>1){
+    visited.pop();
+    stepNo=visited[visited.length-1];
+    render();
+  }
+};
 
-el.excelFile.onchange=async(e)=>{
-  const data=await e.target.files[0].arrayBuffer();
-  const wb=XLSX.read(data);
-  const ws=wb.Sheets[wb.SheetNames[0]];
-  const rows=XLSX.utils.sheet_to_json(ws);
+el.search.oninput=()=>{
+  let q=el.search.value.toLowerCase();
+  el.results.innerHTML="";
+  Object.keys(tree)
+    .filter(i=>i.toLowerCase().includes(q))
+    .forEach(i=>{
+      let li=document.createElement("li");
+      li.textContent=i;
+      li.onclick=()=>loadIssue(i);
+      el.results.appendChild(li);
+    });
+  el.results.classList.add("visible");
+};
+
+el.issueSelect.onchange=e=>loadIssue(e.target.value);
+
+el.file.onchange=async(e)=>{
+  let data=await e.target.files[0].arrayBuffer();
+  let wb=XLSX.read(data);
+  let ws=wb.Sheets[wb.SheetNames[0]];
+  let rows=XLSX.utils.sheet_to_json(ws);
   tree=buildTree(rows);
-  renderIssueList();
+
+  el.issueSelect.innerHTML="";
+  Object.keys(tree).forEach(i=>{
+    let o=document.createElement("option");
+    o.value=i;
+    o.textContent=i;
+    el.issueSelect.appendChild(o);
+  });
+};
+
+document.getElementById("copy").onclick=()=>{
+  navigator.clipboard.writeText(el.summary.value);
 };
 
 </script>
