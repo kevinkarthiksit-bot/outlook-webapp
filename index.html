@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M365 / Outlook Guided Resolution</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #eef6ff;
+      --panel: #ffffff;
+      --primary: #2b78e4;
+      --primary-dark: #1f5fb9;
+      --secondary: #dcecff;
+      --text: #1f2a44;
+      --muted: #5f6b85;
+      --success: #2f9e44;
+      --danger: #d9480f;
+      --border: #c9ddfb;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(145deg, #f7fbff, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .container {
+      width: min(1200px, 94vw);
+      margin: 1.25rem auto 2rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(43, 120, 228, 0.08);
+      padding: 1rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 3.2vw, 2rem);
+      color: var(--primary-dark);
+    }
+
+    .sub {
+      margin-top: 0.25rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    h2 {
+      margin: 0 0 0.8rem;
+      font-size: 1.05rem;
+      color: var(--primary-dark);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(160px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 0.7rem;
+      font-size: 0.95rem;
+      outline: none;
+      background: #fff;
+      color: var(--text);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(43, 120, 228, 0.15);
+    }
+
+    .toolbar, .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 0.58rem 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.2s ease;
+      color: #fff;
+      background: var(--primary);
+    }
+
+    button:hover { transform: translateY(-1px); background: var(--primary-dark); }
+    button:disabled { cursor: not-allowed; background: #a8bfdf; transform: none; }
+
+    .btn-muted { background: #6486be; }
+    .btn-success { background: var(--success); }
+    .btn-danger { background: var(--danger); }
+
+    #stepNav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .step-chip {
+      background: var(--secondary);
+      color: var(--primary-dark);
+      border: 1px solid var(--border);
+      padding: 0.48rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.86rem;
+      cursor: pointer;
+    }
+
+    .step-chip.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .step-chip.visited {
+      border-color: #8ab0ea;
+      background: #edf5ff;
+    }
+
+    #stepTitle { margin-top: 0; margin-bottom: 0.5rem; color: var(--primary-dark); }
+    #stepInstruction { margin: 0.2rem 0 0.8rem; line-height: 1.45; white-space: pre-wrap; }
+
+    .status {
+      margin-top: 0.7rem;
+      padding: 0.7rem;
+      border-radius: 10px;
+      font-weight: 600;
+      display: none;
+    }
+
+    .status.success { background: #e7f7eb; color: #216e34; border: 1px solid #bde5c8; }
+    .status.escalate { background: #fff0ea; color: #a13d16; border: 1px solid #ffd0bf; }
+
+    textarea { min-height: 160px; resize: vertical; }
+
+    #activityLog {
+      margin: 0;
+      padding-left: 1.1rem;
+      max-height: 240px;
+      overflow: auto;
+      color: #33415f;
+    }
+
+    #activityLog li { margin-bottom: 0.4rem; font-size: 0.9rem; }
+
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="card">
+      <h1>M365 / Outlook Guided Resolution</h1>
+      <p class="sub">Upload an Excel decision tree, walk troubleshooting steps, and capture support notes.</p>
+    </section>
+
+    <section class="card">
+      <h2>User Details</h2>
+      <div class="grid-3">
+        <div>
+          <label for="username">Username</label>
+          <input id="username" type="text" placeholder="user@contoso.com" />
+        </div>
+        <div>
+          <label for="platform">Platform</label>
+          <select id="platform">
+            <option>Windows</option>
+            <option>macOS</option>
+            <option>iOS</option>
+            <option>Android</option>
+            <option>Web</option>
+          </select>
+        </div>
+        <div>
+          <label for="environment">Environment</label>
+          <select id="environment">
+            <option>Production</option>
+            <option>Test</option>
+            <option>Pilot</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-3" style="margin-top: 0.75rem;">
+        <div>
+          <label for="excelFile">Upload Excel Decision Tree</label>
+          <input id="excelFile" type="file" accept=".xlsx,.xls" />
+        </div>
+        <div>
+          <label for="issueSelect">Issue</label>
+          <select id="issueSelect"></select>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Issue Title</h2>
+      <div id="issueTitleDisplay" style="font-weight:700; font-size:1.1rem;">Outlook fails to send/receive</div>
+    </section>
+
+    <section class="card">
+      <h2>Step Navigation</h2>
+      <div id="stepNav"></div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <h2>Main Panel</h2>
+        <h3 id="stepTitle"></h3>
+        <p id="stepInstruction"></p>
+        <div class="actions">
+          <button id="btnResolved" class="btn-success">Yes, resolved</button>
+          <button id="btnContinue" class="btn-danger">No, continue</button>
+        </div>
+        <div id="statusBox" class="status"></div>
+      </div>
+
+      <div class="card">
+        <h2>Technician Notes</h2>
+        <textarea id="notes" placeholder="Capture findings, user confirmations, and outcomes..."></textarea>
+        <div class="toolbar" style="margin-top:0.6rem;">
+          <button id="copyNotes" class="btn-muted">Copy Notes</button>
+          <button id="copySteps" class="btn-muted">Copy Steps</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <h2>Export</h2>
+        <div class="toolbar">
+          <button id="exportJson">Export Session JSON</button>
+          <button id="exportTxt" class="btn-muted">Export Notes (.txt)</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Activity Log</h2>
+        <ol id="activityLog"></ol>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const defaultRows = [
+      { Issue: "Outlook fails to send/receive", "Step No": 1, Title: "Verify connectivity", Instruction: "Confirm user has internet access and can browse external websites.", "Next Step": 2, Escalate: "No" },
+      { Issue: "Outlook fails to send/receive", "Step No": 2, Title: "Restart Outlook", Instruction: "Close Outlook completely and reopen. Verify mailbox sync resumes.", "Next Step": 3, Escalate: "No" },
+      { Issue: "Outlook fails to send/receive", "Step No": 3, Title: "Repair account profile", Instruction: "In Control Panel > Mail, run account repair and test send/receive.", "Next Step": "", Escalate: "Yes" }
+    ];
+
+    let tree = {};
+    let currentIssue = "";
+    let currentStepNo = null;
+    let visitedSteps = [];
+    let resolved = false;
+
+    const elements = {
+      excelFile: document.getElementById("excelFile"),
+      issueSelect: document.getElementById("issueSelect"),
+      issueTitleDisplay: document.getElementById("issueTitleDisplay"),
+      stepNav: document.getElementById("stepNav"),
+      stepTitle: document.getElementById("stepTitle"),
+      stepInstruction: document.getElementById("stepInstruction"),
+      btnResolved: document.getElementById("btnResolved"),
+      btnContinue: document.getElementById("btnContinue"),
+      statusBox: document.getElementById("statusBox"),
+      notes: document.getElementById("notes"),
+      activityLog: document.getElementById("activityLog")
+    };
+
+    function toBool(value) {
+      return String(value).trim().toLowerCase() === "yes" || String(value).trim() === "1" || String(value).trim().toLowerCase() === "true";
+    }
+
+    function toNumber(value) {
+      if (value === undefined || value === null || value === "") return null;
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function buildTree(rows) {
+      const result = {};
+      rows.forEach((row) => {
+        const issue = String(row.Issue || "").trim();
+        const stepNo = toNumber(row["Step No"]);
+        if (!issue || !stepNo) return;
+
+        if (!result[issue]) result[issue] = { steps: {} };
+
+        result[issue].steps[stepNo] = {
+          stepNo,
+          title: String(row.Title || `Step ${stepNo}`).trim() || `Step ${stepNo}`,
+          instruction: String(row.Instruction || "").trim() || "No instruction provided.",
+          nextStep: toNumber(row["Next Step"]),
+          escalate: toBool(row.Escalate)
+        };
+      });
+
+      Object.keys(result).forEach((issue) => {
+        result[issue].order = Object.keys(result[issue].steps).map(Number).sort((a, b) => a - b);
+      });
+      return result;
+    }
+
+    function logAction(action) {
+      const ts = new Date().toLocaleTimeString();
+      const item = document.createElement("li");
+      item.textContent = `[${ts}] ${action}`;
+      elements.activityLog.prepend(item);
+    }
+
+    function setStatus(message, type) {
+      elements.statusBox.textContent = message;
+      elements.statusBox.className = `status ${type}`;
+      elements.statusBox.style.display = "block";
+    }
+
+    function clearStatus() {
+      elements.statusBox.style.display = "none";
+      elements.statusBox.textContent = "";
+    }
+
+    function currentStep() {
+      return tree[currentIssue]?.steps?.[currentStepNo] || null;
+    }
+
+    function renderStepNav() {
+      const issueData = tree[currentIssue];
+      elements.stepNav.innerHTML = "";
+      if (!issueData) return;
+
+      issueData.order.forEach((stepNo) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "step-chip";
+        chip.textContent = `Step ${stepNo}`;
+        if (stepNo === currentStepNo) chip.classList.add("active");
+        if (visitedSteps.includes(stepNo)) chip.classList.add("visited");
+        chip.addEventListener("click", () => {
+          if (resolved) return;
+          currentStepNo = stepNo;
+          renderCurrentStep();
+          logAction(`Step visited: ${stepNo}`);
+        });
+        elements.stepNav.appendChild(chip);
+      });
+    }
+
+    function renderCurrentStep() {
+      const step = currentStep();
+      if (!step) {
+        elements.stepTitle.textContent = "No steps available";
+        elements.stepInstruction.textContent = "Upload a valid spreadsheet or choose another issue.";
+        elements.btnResolved.disabled = true;
+        elements.btnContinue.disabled = true;
+        renderStepNav();
+        return;
+      }
+
+      elements.stepTitle.textContent = `Step ${step.stepNo}: ${step.title}`;
+      elements.stepInstruction.textContent = step.instruction;
+      elements.btnResolved.disabled = resolved;
+      elements.btnContinue.disabled = resolved;
+      renderStepNav();
+    }
+
+    function startIssue(issue) {
+      currentIssue = issue;
+      elements.issueTitleDisplay.textContent = issue || "No issue selected";
+      const order = tree[currentIssue]?.order || [];
+      currentStepNo = order[0] || null;
+      visitedSteps = currentStepNo ? [currentStepNo] : [];
+      resolved = false;
+      clearStatus();
+      renderCurrentStep();
+      if (currentStepNo) logAction(`Step visited: ${currentStepNo}`);
+    }
+
+    function nextStepFrom(step) {
+      const issueData = tree[currentIssue];
+      if (!issueData) return null;
+      if (step.nextStep && issueData.steps[step.nextStep]) return step.nextStep;
+
+      const idx = issueData.order.indexOf(step.stepNo);
+      return idx >= 0 ? issueData.order[idx + 1] || null : null;
+    }
+
+    function handleResolved() {
+      if (!currentStep()) return;
+      resolved = true;
+      setStatus("Issue marked resolved. Troubleshooting flow stopped.", "success");
+      elements.btnResolved.disabled = true;
+      elements.btnContinue.disabled = true;
+      logAction(`Resolved at Step ${currentStepNo}`);
+    }
+
+    function handleContinue() {
+      const step = currentStep();
+      if (!step || resolved) return;
+
+      logAction(`Continued from Step ${currentStepNo}`);
+      const next = nextStepFrom(step);
+
+      if (next) {
+        currentStepNo = next;
+        if (!visitedSteps.includes(next)) visitedSteps.push(next);
+        renderCurrentStep();
+        logAction(`Step visited: ${next}`);
+        return;
+      }
+
+      if (step.escalate || !next) {
+        setStatus("Escalate to Tier 2", "escalate");
+        elements.btnResolved.disabled = true;
+        elements.btnContinue.disabled = true;
+        logAction("Unresolved after final step - Escalate to Tier 2");
+      }
+    }
+
+    async function copyText(text, label) {
+      try {
+        await navigator.clipboard.writeText(text);
+        logAction(`${label} copied to clipboard`);
+      } catch {
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        document.body.removeChild(temp);
+        logAction(`${label} copied to clipboard (fallback)`);
+      }
+    }
+
+    function downloadFile(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportSessionJson() {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        user: {
+          username: document.getElementById("username").value,
+          platform: document.getElementById("platform").value,
+          environment: document.getElementById("environment").value
+        },
+        issue: currentIssue,
+        currentStep: currentStepNo,
+        visitedSteps,
+        resolved,
+        notes: elements.notes.value,
+        activityLog: Array.from(elements.activityLog.querySelectorAll("li")).map((li) => li.textContent)
+      };
+      downloadFile("outlook_session.json", JSON.stringify(payload, null, 2), "application/json");
+      logAction("Session exported as JSON");
+    }
+
+    function exportNotesTxt() {
+      const lines = [
+        "M365 / Outlook Guided Resolution",
+        `Exported: ${new Date().toLocaleString()}`,
+        `Issue: ${currentIssue}`,
+        `Current Step: ${currentStepNo || "N/A"}`,
+        "",
+        "Technician Notes:",
+        elements.notes.value || "(no notes)",
+        "",
+        "Visited Steps:",
+        visitedSteps.join(", ") || "None"
+      ];
+      downloadFile("outlook_notes.txt", lines.join("\n"), "text/plain");
+      logAction("Notes exported as TXT");
+    }
+
+    function populateIssueSelector() {
+      const issues = Object.keys(tree);
+      elements.issueSelect.innerHTML = "";
+      issues.forEach((issue) => {
+        const option = document.createElement("option");
+        option.value = issue;
+        option.textContent = issue;
+        elements.issueSelect.appendChild(option);
+      });
+      startIssue(issues[0] || "");
+    }
+
+    async function handleFileUpload(file) {
+      if (!file) return;
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array" });
+      const ws = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      tree = buildTree(rows);
+      populateIssueSelector();
+      logAction(`Excel loaded: ${file.name}`);
+    }
+
+    elements.btnResolved.addEventListener("click", handleResolved);
+    elements.btnContinue.addEventListener("click", handleContinue);
+
+    elements.issueSelect.addEventListener("change", (e) => {
+      startIssue(e.target.value);
+      logAction(`Issue changed: ${e.target.value}`);
+    });
+
+    elements.excelFile.addEventListener("change", (e) => {
+      handleFileUpload(e.target.files[0]).catch((err) => {
+        logAction(`Excel load failed: ${err.message}`);
+        setStatus("Unable to read Excel file. Ensure the first sheet has required columns.", "escalate");
+      });
+    });
+
+    document.getElementById("copyNotes").addEventListener("click", () => {
+      copyText(elements.notes.value || "", "Notes");
+    });
+
+    document.getElementById("copySteps").addEventListener("click", () => {
+      const issueData = tree[currentIssue];
+      if (!issueData) return;
+      const text = issueData.order
+        .map((num) => {
+          const s = issueData.steps[num];
+          return `Step ${num}: ${s.title}\n${s.instruction}`;
+        })
+        .join("\n\n");
+      copyText(text, "Steps");
+    });
+
+    document.getElementById("exportJson").addEventListener("click", exportSessionJson);
+    document.getElementById("exportTxt").addEventListener("click", exportNotesTxt);
+
+    tree = buildTree(defaultRows);
+    populateIssueSelector();
+    logAction("Default decision tree loaded");
+  </script>
+</body>
+</html>
