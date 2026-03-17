@@ -75,7 +75,129 @@ button{
   cursor:pointer;
 }
 
-</style>
+:root {
+  --bg: #f4f8ff;
+  --card: #ffffff;
+  --primary: #2563eb;
+  --primary-dark: #1e40af;
+  --success: #16a34a;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #dbeafe;
+  --shadow: 0 10px 24px rgba(37, 99, 235, 0.1);
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #f8fbff, var(--bg));
+  color: var(--text);
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+button {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: none;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+.btn-primary { background: var(--primary); }
+.btn-success { background: var(--success); }
+.btn-back { background: #64748b; }
+
+.step-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  margin: 4px;
+  border-radius: 999px;
+  background: #eff6ff;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.step-pill.active {
+  background: var(--primary);
+  color: white;
+}
+
+.instruction-box {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.instruction-step {
+  background: #eaf3ff;
+  padding: 10px;
+  border-radius: 10px;
+  animation: fadeIn 0.3s ease;
+}
+
+.search-results {
+  position: absolute;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-height: 200px;
+  overflow: auto;
+  display: none;
+}
+
+.search-results.visible {
+  display: block;
+}
+
+.search-results li {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.search-results li:hover {
+  background: #eff6ff;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 </head>
 
 <body>
@@ -171,10 +293,18 @@ function startIssue(issue){
   currentIssue=issue;
   currentStepNo=tree[issue].order[0];
   visitedSteps=[currentStepNo];
-  render();
+  function render() {   const step = tree[currentIssue].steps[currentStepNo];    el.issueTitleDisplay.textContent = currentIssue;    const container = document.getElementById("stepInstruction");   container.innerHTML = "";    const parts = step.instruction.split("
+");    parts.forEach(p => {     const div = document.createElement("div");     div.className = "instruction-step";     div.textContent = p.replace("STEP:", "");     container.appendChild(div);   });    el.stepTitle.textContent = step.title;    el.summaryText.value =     `Issue: ${currentIssue}
+Steps Taken:
+` +     visitedSteps.map((s,i)=>`${i+1}. Step ${s}`).join("
+"); };
 }
 
-function render(){
+function function render() {   const step = tree[currentIssue].steps[currentStepNo];    el.issueTitleDisplay.textContent = currentIssue;    const container = document.getElementById("stepInstruction");   container.innerHTML = "";    const parts = step.instruction.split("
+");    parts.forEach(p => {     const div = document.createElement("div");     div.className = "instruction-step";     div.textContent = p.replace("STEP:", "");     container.appendChild(div);   });    el.stepTitle.textContent = step.title;    el.summaryText.value =     `Issue: ${currentIssue}
+Steps Taken:
+` +     visitedSteps.map((s,i)=>`${i+1}. Step ${s}`).join("
+"); }{
   const step=tree[currentIssue].steps[currentStepNo];
   el.issueTitleDisplay.textContent=currentIssue;
   el.stepTitle.textContent=step.title;
@@ -188,7 +318,11 @@ document.getElementById("btnContinue").onclick=()=>{
   if(step.nextStep){
     currentStepNo=step.nextStep;
     visitedSteps.push(currentStepNo);
-    render();
+    function render() {   const step = tree[currentIssue].steps[currentStepNo];    el.issueTitleDisplay.textContent = currentIssue;    const container = document.getElementById("stepInstruction");   container.innerHTML = "";    const parts = step.instruction.split("
+");    parts.forEach(p => {     const div = document.createElement("div");     div.className = "instruction-step";     div.textContent = p.replace("STEP:", "");     container.appendChild(div);   });    el.stepTitle.textContent = step.title;    el.summaryText.value =     `Issue: ${currentIssue}
+Steps Taken:
+` +     visitedSteps.map((s,i)=>`${i+1}. Step ${s}`).join("
+"); };
   }
 };
 
