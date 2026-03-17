@@ -64,95 +64,6 @@
       align-items: end;
     }
 
-    .common-issues {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 0.6rem;
-      margin-top: 0.75rem;
-    }
-
-    .issue-card {
-      border: 1px solid #dbeafe;
-      background: #f1f7ff;
-      color: #1e3a8a;
-      border-radius: 12px;
-      padding: 0.7rem 0.75rem;
-      font-weight: 600;
-      text-align: left;
-      box-shadow: 0 6px 14px rgba(30, 64, 175, 0.08);
-      transition: transform 0.16s ease, box-shadow 0.2s ease, background 0.2s ease;
-    }
-
-    .issue-card:hover {
-      transform: translateY(-2px);
-      background: #e6f0ff;
-      box-shadow: 0 10px 22px rgba(30, 64, 175, 0.16);
-    }
-
-    .search-panel {
-      position: relative;
-      margin-bottom: 0.6rem;
-    }
-
-    .search-results {
-      position: absolute;
-      z-index: 20;
-      top: calc(100% + 6px);
-      left: 0;
-      right: 0;
-      margin: 0;
-      padding: 0.35rem;
-      list-style: none;
-      border: 1px solid #bfdbfe;
-      border-radius: 12px;
-      background: #ffffff;
-      box-shadow: 0 12px 24px rgba(30, 64, 175, 0.12);
-      max-height: 220px;
-      overflow: auto;
-      display: none;
-    }
-
-    .search-results.visible { display: block; }
-
-    .search-result-item {
-      border: 1px solid transparent;
-      border-radius: 10px;
-      padding: 0.45rem 0.55rem;
-      cursor: pointer;
-      transition: background 0.16s ease, border-color 0.16s ease;
-    }
-
-    .search-result-item:hover {
-      background: #eff6ff;
-      border-color: #bfdbfe;
-    }
-
-    .search-result-title {
-      font-size: 0.93rem;
-      color: #1e3a8a;
-      font-weight: 600;
-    }
-
-    .search-result-category {
-      font-size: 0.8rem;
-      color: #64748b;
-      margin-top: 0.12rem;
-    }
-
-    .search-highlight {
-      background: #dbeafe;
-      color: #1e3a8a;
-      border-radius: 4px;
-      padding: 0 2px;
-      font-weight: 700;
-    }
-
-    .search-no-results {
-      padding: 0.55rem;
-      color: #64748b;
-      font-size: 0.88rem;
-    }
-
     label {
       display: block;
       margin-bottom: 0.35rem;
@@ -174,6 +85,14 @@
     input:focus, select:focus, textarea:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+    }
+
+    #issueTitleDisplay {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
     }
 
     #issueTitleDisplay {
@@ -353,14 +272,6 @@
     <section class="card">
       <h1>Outlook Guided Resolution</h1>
       <p class="sub">Upload an Excel decision tree and follow guided troubleshooting steps.</p>
-      <h2 style="margin-top:0.85rem; font-size:1rem;">Common Issues</h2>
-      <div id="commonIssues" class="common-issues">
-        <button type="button" class="issue-card" data-issue="Outlook Not Opening">Outlook Not Opening</button>
-        <button type="button" class="issue-card" data-issue="Emails Not Sending">Emails Not Sending</button>
-        <button type="button" class="issue-card" data-issue="Emails Not Receiving">Emails Not Receiving</button>
-        <button type="button" class="issue-card" data-issue="Outlook Slow Performance">Outlook Slow Performance</button>
-        <button type="button" class="issue-card" data-issue="Authentication Prompt Loop">Authentication Prompt Loop</button>
-      </div>
     </section>
 
     <section class="card">
@@ -482,7 +393,6 @@
         if (!issue || !stepNo) return;
 
         if (!map[issue]) map[issue] = { steps: {}, order: [] };
-        if (!map[issue].category) map[issue].category = String(row.Category || "General").trim() || "General";
 
         map[issue].steps[stepNo] = {
           stepNo,
@@ -593,66 +503,6 @@
       ].join("\n");
 
       el.summaryText.value = text;
-    }
-
-    function issueCategory(issue) {
-      return tree[issue]?.category || "General";
-    }
-
-    function rebuildIssueList() {
-      allIssues = Object.keys(tree).map((issue) => ({
-        issue,
-        category: issueCategory(issue)
-      }));
-    }
-
-    function loadIssue(issue) {
-      if (!tree[issue]) return;
-      el.issueSelect.value = issue;
-      startIssue(issue);
-      el.issueSearch.value = issue;
-      el.searchResults.classList.remove("visible");
-      el.searchResults.innerHTML = "";
-    }
-
-    function findClosestIssueName(name) {
-      if (tree[name]) return name;
-      const target = String(name || "").toLowerCase();
-      return allIssues.find((item) => item.issue.toLowerCase().includes(target) || target.includes(item.issue.toLowerCase()))?.issue || "";
-    }
-
-    function highlightMatch(text, query) {
-      const safeText = escapeHtml(text);
-      const q = String(query || "").trim();
-      if (!q) return safeText;
-      const escapedQuery = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      return safeText.replace(new RegExp(`(${escapedQuery})`, "ig"), '<span class="search-highlight">$1</span>');
-    }
-
-    function renderSearchResults(query) {
-      const text = String(query || "").trim().toLowerCase();
-      const issues = allIssues;
-      const filtered = text
-        ? issues.filter((item) => {
-            return item.issue.toLowerCase().includes(text) || item.category.toLowerCase().includes(text);
-          })
-        : issues;
-
-      el.searchResults.innerHTML = "";
-      if (!filtered.length || !text) {
-        el.searchResults.innerHTML = `<li class="search-no-results">No results found</li>`;
-        el.searchResults.classList.add("visible");
-        return;
-      }
-
-      filtered.slice(0, 20).forEach((issueItem) => {
-        const listItem = document.createElement("li");
-        listItem.className = "search-result-item";
-        listItem.innerHTML = `<div class="search-result-title">${highlightMatch(issueItem.issue, text)}</div><div class="search-result-category">Category: ${highlightMatch(issueItem.category, text)}</div>`;
-        listItem.addEventListener("click", () => loadIssue(issueItem.issue));
-        el.searchResults.appendChild(listItem);
-      });
-      el.searchResults.classList.add("visible");
     }
 
     function setStatus(message, type) {
@@ -795,13 +645,13 @@
     }
 
     function populateIssueSelector() {
-      rebuildIssueList();
-      const issues = allIssues.map((item) => item.issue);
+      const issues = Object.keys(tree);
       el.issueSelect.innerHTML = "";
       issues.forEach((issue) => {
         const option = document.createElement("option");
         option.value = issue;
         option.textContent = `${issue} (${issueCategory(issue)})`;
+        option.textContent = issue;
         el.issueSelect.appendChild(option);
       });
       startIssue(issues[0] || "");
@@ -819,25 +669,7 @@
       populateIssueSelector();
     }
 
-    el.issueSelect.addEventListener("change", (event) => loadIssue(event.target.value));
-    el.commonIssues.addEventListener("click", (event) => {
-      const card = event.target.closest(".issue-card");
-      if (!card) return;
-      const issueName = card.dataset.issue || "";
-      const match = findClosestIssueName(issueName);
-      if (match) {
-        loadIssue(match);
-      } else {
-        setStatus(`Issue not found in active decision tree: ${issueName}`, "escalated");
-      }
-    });
-    el.issueSearch.addEventListener("input", (event) => renderSearchResults(event.target.value));
-    el.issueSearch.addEventListener("focus", () => renderSearchResults(el.issueSearch.value));
-    document.addEventListener("click", (event) => {
-      if (!event.target.closest(".search-panel")) {
-        el.searchResults.classList.remove("visible");
-      }
-    });
+    el.issueSelect.addEventListener("change", (event) => startIssue(event.target.value));
     el.excelFile.addEventListener("change", (event) => {
       handleFileUpload(event.target.files[0]).catch(() => {
         status = "Escalated";
@@ -856,10 +688,6 @@
 
     tree = buildTree(defaultRows);
     populateIssueSelector();
-    window.setTimeout(() => {
-      el.issueSearch.focus();
-      el.issueSearch.select();
-    }, 0);
   </script>
 </body>
 </html>
