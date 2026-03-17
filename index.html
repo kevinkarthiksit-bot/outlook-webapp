@@ -3,21 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>M365 / Outlook Guided Resolution</title>
+  <title>Outlook Guided Resolution</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
-      --bg: #eef6ff;
-      --panel: #ffffff;
-      --primary: #2b78e4;
-      --primary-dark: #1f5fb9;
-      --secondary: #dcecff;
-      --text: #1f2a44;
-      --muted: #5f6b85;
-      --success: #2f9e44;
-      --danger: #d9480f;
-      --border: #c9ddfb;
-      --radius: 14px;
+      --bg: #e8edf5;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --primary-dark: #1e40af;
+      --success: #16a34a;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #dbeafe;
+      --shadow: 0 10px 24px rgba(37, 99, 235, 0.08);
+      --radius: 16px;
     }
 
     * { box-sizing: border-box; }
@@ -25,84 +24,275 @@
     body {
       margin: 0;
       font-family: "Segoe UI", Roboto, Arial, sans-serif;
-      background: linear-gradient(145deg, #f7fbff, var(--bg));
+      background: var(--bg);
       color: var(--text);
       min-height: 100vh;
     }
 
     .container {
-      width: min(1200px, 94vw);
-      margin: 1.25rem auto 2rem;
+      width: min(980px, 94vw);
+      margin: 1.5rem auto 2.5rem;
       display: grid;
       gap: 1rem;
     }
 
     .card {
-      background: var(--panel);
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      box-shadow: 0 8px 24px rgba(43, 120, 228, 0.08);
+      box-shadow: var(--shadow);
       padding: 1rem;
     }
 
+    h1, h2, h3 { margin: 0; }
+
     h1 {
-      margin: 0;
-      font-size: clamp(1.4rem, 3.2vw, 2rem);
       color: var(--primary-dark);
+      font-size: clamp(1.5rem, 3vw, 2rem);
     }
 
     .sub {
-      margin-top: 0.25rem;
+      margin: 0.35rem 0 0;
       color: var(--muted);
       font-size: 0.95rem;
     }
 
-    h2 {
-      margin: 0 0 0.8rem;
-      font-size: 1.05rem;
+    .section-title {
       color: var(--primary-dark);
+      font-size: 1rem;
+      margin-bottom: 0.65rem;
     }
 
-    .grid-3 {
+    .top-controls {
       display: grid;
-      grid-template-columns: repeat(3, minmax(160px, 1fr));
+      grid-template-columns: 1.3fr 1fr;
       gap: 0.75rem;
+      align-items: end;
     }
 
-    .grid-2 {
+    .common-issues {
       display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.6rem;
+      margin-top: 0.75rem;
+    }
+
+    .issue-card {
+      border: 1px solid #dbeafe;
+      background: #f1f7ff;
+      color: #1e3a8a;
+      border-radius: 12px;
+      padding: 0.7rem 0.75rem;
+      font-weight: 600;
+      text-align: left;
+      box-shadow: 0 6px 14px rgba(30, 64, 175, 0.08);
+      transition: transform 0.16s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .issue-card:hover {
+      transform: translateY(-2px);
+      background: #e6f0ff;
+      box-shadow: 0 10px 22px rgba(30, 64, 175, 0.16);
+    }
+
+    .search-panel {
+      position: relative;
+      margin-bottom: 0.6rem;
+    }
+
+    .search-results {
+      position: absolute;
+      z-index: 20;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      margin: 0;
+      padding: 0.35rem;
+      list-style: none;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 12px 24px rgba(30, 64, 175, 0.12);
+      max-height: 220px;
+      overflow: auto;
+      display: none;
+    }
+
+    .search-results.visible { display: block; }
+
+    .search-result-item {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 0.45rem 0.55rem;
+      cursor: pointer;
+      transition: background 0.16s ease, border-color 0.16s ease;
+    }
+
+    .search-result-item:hover {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    .search-result-title {
+      font-size: 0.93rem;
+      color: #1e3a8a;
+      font-weight: 600;
+    }
+
+    .search-result-category {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 0.12rem;
+    }
+
+    .search-highlight {
+      background: #dbeafe;
+      color: #1e3a8a;
+      border-radius: 4px;
+      padding: 0 2px;
+      font-weight: 700;
+    }
+
+    .search-no-results {
+      padding: 0.55rem;
+      color: #64748b;
+      font-size: 0.88rem;
     }
 
     label {
       display: block;
-      font-size: 0.82rem;
-      color: var(--muted);
       margin-bottom: 0.35rem;
+      font-size: 0.85rem;
+      color: var(--muted);
     }
 
     input, select, textarea {
       width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.6rem 0.7rem;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 0.62rem 0.72rem;
       font-size: 0.95rem;
-      outline: none;
-      background: #fff;
       color: var(--text);
+      background: #fff;
+      outline: none;
     }
 
     input:focus, select:focus, textarea:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(43, 120, 228, 0.15);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
     }
 
-    .toolbar, .actions {
+    #issueTitleDisplay {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    #stepNav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .step-pill {
+      border: 1px solid #bfdbfe;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: var(--primary-dark);
+      padding: 0.45rem 0.8rem;
+      cursor: pointer;
+      font-size: 0.88rem;
+      transition: all 0.2s ease;
+    }
+
+    .step-pill.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
+    }
+
+    .step-pill.completed {
+      background: #ecfdf3;
+      border-color: #86efac;
+      color: #166534;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 1rem;
+    }
+
+    .instruction-box {
+      margin-top: 0.75rem;
+      border: 1px solid #c7ddff;
+      background: #f8fbff;
+      border-radius: 12px;
+      padding: 0.8rem;
+      line-height: 1.45;
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .instruction-step {
+      border: 1px solid #bfdbfe;
+      background: #eaf3ff;
+      border-radius: 10px;
+      padding: 0.6rem 0.7rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.55rem;
+      align-items: start;
+      transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .instruction-step:hover {
+      background: #dbeafe;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.14);
+    }
+
+    .instruction-icon {
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      margin-top: 1px;
+    }
+
+    .instruction-text {
+      color: #1e3a8a;
+      font-size: 0.95rem;
+    }
+
+    .kbd {
+      font-weight: 700;
+      color: #1e40af;
+    }
+
+    .cmd {
+      display: inline-block;
+      padding: 0.12rem 0.4rem;
+      border-radius: 8px;
+      border: 1px solid #bfdbfe;
+      background: #f8fafc;
+      font-family: "Consolas", "Courier New", monospace;
+      color: #0f172a;
+      font-size: 0.9em;
+    }
+
+    .button-row {
+      margin-top: 1rem;
       display: flex;
       flex-wrap: wrap;
       gap: 0.6rem;
-      align-items: center;
     }
 
     button {
@@ -111,350 +301,519 @@
       padding: 0.58rem 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.15s ease, background 0.2s ease;
-      color: #fff;
-      background: var(--primary);
-    }
-
-    button:hover { transform: translateY(-1px); background: var(--primary-dark); }
-    button:disabled { cursor: not-allowed; background: #a8bfdf; transform: none; }
-
-    .btn-muted { background: #6486be; }
-    .btn-success { background: var(--success); }
-    .btn-danger { background: var(--danger); }
-
-    #stepNav {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
-    .step-chip {
-      background: var(--secondary);
-      color: var(--primary-dark);
-      border: 1px solid var(--border);
-      padding: 0.48rem 0.8rem;
-      border-radius: 999px;
-      font-size: 0.86rem;
-      cursor: pointer;
-    }
-
-    .step-chip.active {
-      background: var(--primary);
       color: white;
-      border-color: var(--primary);
+      transition: transform 0.14s ease, filter 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .step-chip.visited {
-      border-color: #8ab0ea;
-      background: #edf5ff;
-    }
+    button:hover { transform: translateY(-1px); filter: brightness(0.96); box-shadow: 0 6px 14px rgba(30, 64, 175, 0.2); }
+    button:active { transform: translateY(0) scale(0.97); }
+    button:disabled { background: #94a3b8 !important; cursor: not-allowed; transform: none; }
 
-    #stepTitle { margin-top: 0; margin-bottom: 0.5rem; color: var(--primary-dark); }
-    #stepInstruction { margin: 0.2rem 0 0.8rem; line-height: 1.45; white-space: pre-wrap; }
+    .btn-primary { background: var(--primary); }
+    .btn-success { background: var(--success); }
+    .btn-back { background: #94a3b8; }
 
     .status {
-      margin-top: 0.7rem;
+      margin-top: 0.8rem;
+      border-radius: 12px;
       padding: 0.7rem;
-      border-radius: 10px;
       font-weight: 600;
       display: none;
     }
 
-    .status.success { background: #e7f7eb; color: #216e34; border: 1px solid #bde5c8; }
-    .status.escalate { background: #fff0ea; color: #a13d16; border: 1px solid #ffd0bf; }
-
-    textarea { min-height: 160px; resize: vertical; }
-
-    #activityLog {
-      margin: 0;
-      padding-left: 1.1rem;
-      max-height: 240px;
-      overflow: auto;
-      color: #33415f;
+    .status.resolved {
+      background: #ecfdf3;
+      border: 1px solid #bbf7d0;
+      color: #166534;
     }
 
-    #activityLog li { margin-bottom: 0.4rem; font-size: 0.9rem; }
+    .status.escalated {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 180px;
+      margin-top: 0.65rem;
+      font-family: inherit;
+    }
+
+    .step-content {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .step-content.animating {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    .step-content.entering {
+      animation: fadeStepIn 0.28s ease;
+    }
+
+    @keyframes fadeStepIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
     @media (max-width: 900px) {
-      .grid-2 { grid-template-columns: 1fr; }
-      .grid-3 { grid-template-columns: 1fr; }
+      .top-controls, .layout { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <section class="card">
-      <h1>M365 / Outlook Guided Resolution</h1>
-      <p class="sub">Upload an Excel decision tree, walk troubleshooting steps, and capture support notes.</p>
+      <h1>Outlook Guided Resolution</h1>
+      <p class="sub">Upload an Excel decision tree and follow guided troubleshooting steps.</p>
+      <h2 style="margin-top:0.65rem; color:#334155; font-size:1rem;">Common Issues</h2>
+      <div id="commonIssues" class="common-issues">
+        <button type="button" class="issue-card" data-issue="Outlook Not Opening">Outlook Not Opening</button>
+        <button type="button" class="issue-card" data-issue="Emails Not Sending">Emails Not Sending</button>
+        <button type="button" class="issue-card" data-issue="Emails Not Receiving">Emails Not Receiving</button>
+        <button type="button" class="issue-card" data-issue="Outlook Slow Performance">Outlook Slow Performance</button>
+        <button type="button" class="issue-card" data-issue="Authentication Prompt Loop">Authentication Prompt Loop</button>
+      </div>
     </section>
 
     <section class="card">
-      <h2>User Details</h2>
-      <div class="grid-3">
-        <div>
-          <label for="username">Username</label>
-          <input id="username" type="text" placeholder="user@contoso.com" />
-        </div>
-        <div>
-          <label for="platform">Platform</label>
-          <select id="platform">
-            <option>Windows</option>
-            <option>macOS</option>
-            <option>iOS</option>
-            <option>Android</option>
-            <option>Web</option>
-          </select>
-        </div>
-        <div>
-          <label for="environment">Environment</label>
-          <select id="environment">
-            <option>Production</option>
-            <option>Test</option>
-            <option>Pilot</option>
-          </select>
-        </div>
-      </div>
-      <div class="grid-3" style="margin-top: 0.75rem;">
+      <div class="top-controls">
         <div>
           <label for="excelFile">Upload Excel Decision Tree</label>
           <input id="excelFile" type="file" accept=".xlsx,.xls" />
+          <div style="margin-top:0.65rem;">
+            <label for="issueSelect">Issue</label>
+            <select id="issueSelect"></select>
+          </div>
         </div>
-        <div>
-          <label for="issueSelect">Issue</label>
-          <select id="issueSelect"></select>
+        <div class="search-panel" style="margin-bottom:0;">
+          <label for="issueSearch">Search Issues</label>
+          <input id="issueSearch" type="text" placeholder="Search issues..." autocomplete="off" />
+          <ul id="searchResults" class="search-results" aria-label="Issue search results"></ul>
         </div>
       </div>
     </section>
 
     <section class="card">
-      <h2>Issue Title</h2>
-      <div id="issueTitleDisplay" style="font-weight:700; font-size:1.1rem;">Outlook fails to send/receive</div>
+      <h2 style="font-size:2rem; margin-bottom:0.45rem; color:#1f2937;">Issue Title</h2>
+      <p id="issueTitleDisplay">Outlook fails to send/receive</p>
+      <div id="stepNav" aria-label="Step navigation"></div>
     </section>
 
-    <section class="card">
-      <h2>Step Navigation</h2>
-      <div id="stepNav"></div>
-    </section>
-
-    <section class="grid-2">
-      <div class="card">
-        <h2>Main Panel</h2>
-        <h3 id="stepTitle"></h3>
-        <p id="stepInstruction"></p>
-        <div class="actions">
+    <section class="layout">
+      <article class="card">
+        <div id="stepContent" class="step-content">
+          <h2 id="stepTitle">Step</h2>
+          <div class="instruction-box" id="stepInstruction">Instructions will appear here.</div>
+        </div>
+        <div class="button-row">
           <button id="btnResolved" class="btn-success">Yes, resolved</button>
-          <button id="btnContinue" class="btn-danger">No, continue</button>
+          <button id="btnContinue" class="btn-primary">No, continue</button>
+          <button id="btnBack" class="btn-back">Back</button>
+          <button id="btnCopyStep" class="btn-primary">Copy Current Step</button>
+          <button id="btnReset" class="btn-back">Reset Flow</button>
         </div>
         <div id="statusBox" class="status"></div>
-      </div>
+      </article>
 
-      <div class="card">
-        <h2>Technician Notes</h2>
-        <textarea id="notes" placeholder="Capture findings, user confirmations, and outcomes..."></textarea>
-        <div class="toolbar" style="margin-top:0.6rem;">
-          <button id="copyNotes" class="btn-muted">Copy Notes</button>
-          <button id="copySteps" class="btn-muted">Copy Steps</button>
+      <aside class="card">
+        <h2>Session Summary</h2>
+        <textarea id="summaryText" aria-label="Session Summary"></textarea>
+        <div class="button-row">
+          <button id="btnCopySummary" class="btn-primary">Copy Summary</button>
         </div>
-      </div>
-    </section>
-
-    <section class="grid-2">
-      <div class="card">
-        <h2>Export</h2>
-        <div class="toolbar">
-          <button id="exportJson">Export Session JSON</button>
-          <button id="exportTxt" class="btn-muted">Export Notes (.txt)</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Activity Log</h2>
-        <ol id="activityLog"></ol>
-      </div>
+      </aside>
     </section>
   </div>
 
   <script>
     const defaultRows = [
-      { Issue: "Outlook fails to send/receive", "Step No": 1, Title: "Verify connectivity", Instruction: "Confirm user has internet access and can browse external websites.", "Next Step": 2, Escalate: "No" },
-      { Issue: "Outlook fails to send/receive", "Step No": 2, Title: "Restart Outlook", Instruction: "Close Outlook completely and reopen. Verify mailbox sync resumes.", "Next Step": 3, Escalate: "No" },
-      { Issue: "Outlook fails to send/receive", "Step No": 3, Title: "Repair account profile", Instruction: "In Control Panel > Mail, run account repair and test send/receive.", "Next Step": "", Escalate: "Yes" }
+      { Issue: "Outlook fails to send/receive", Category: "Mail Flow", "Step No": 1, Title: "Verify connectivity", Instruction: "Confirm user has internet access and can browse external websites.", "Next Step": 2, Escalate: "No" },
+      { Issue: "Outlook fails to send/receive", Category: "Mail Flow", "Step No": 2, Title: "Restart Outlook", Instruction: "Close Outlook completely and reopen. Verify mailbox sync resumes.", "Next Step": 3, Escalate: "No" },
+      { Issue: "Outlook fails to send/receive", Category: "Mail Flow", "Step No": 3, Title: "Repair account profile", Instruction: "In Control Panel > Mail, run account repair and test send/receive.", "Next Step": "", Escalate: "Yes" },
+
+      { Issue: "Outlook Not Opening", Category: "Launch", "Step No": 1, Title: "Launch in safe mode", Instruction: "STEP: Press Win + R\nSTEP: Type outlook.exe /safe and press Enter", "Next Step": 2, Escalate: "No" },
+      { Issue: "Outlook Not Opening", Category: "Launch", "Step No": 2, Title: "Disable problematic add-ins", Instruction: "Open File > Options > Add-ins and disable COM add-ins one by one.", "Next Step": "", Escalate: "Yes" },
+
+      { Issue: "Emails Not Sending", Category: "Mail Flow", "Step No": 1, Title: "Check Outbox and connectivity", Instruction: "Confirm message is not stuck in Outbox and internet is stable.", "Next Step": 2, Escalate: "No" },
+      { Issue: "Emails Not Sending", Category: "Mail Flow", "Step No": 2, Title: "Re-authenticate account", Instruction: "Remove stored credential and sign in again to refresh token.", "Next Step": "", Escalate: "Yes" },
+
+      { Issue: "Emails Not Receiving", Category: "Mail Flow", "Step No": 1, Title: "Validate sync and filters", Instruction: "Check focused inbox, rules, and sync settings for the mailbox.", "Next Step": 2, Escalate: "No" },
+      { Issue: "Emails Not Receiving", Category: "Mail Flow", "Step No": 2, Title: "Test in web outlook", Instruction: "Sign in to Outlook Web and verify if new mail appears there.", "Next Step": "", Escalate: "Yes" },
+
+      { Issue: "Outlook Slow Performance", Category: "Performance", "Step No": 1, Title: "Measure profile/add-in impact", Instruction: "Run Outlook in safe mode and compare responsiveness.", "Next Step": 2, Escalate: "No" },
+      { Issue: "Outlook Slow Performance", Category: "Performance", "Step No": 2, Title: "Reduce cached footprint", Instruction: "Lower cached mail duration and archive large folders.", "Next Step": "", Escalate: "Yes" },
+
+      { Issue: "Authentication Prompt Loop", Category: "Authentication", "Step No": 1, Title: "Clear stale credentials", Instruction: "Open Credential Manager and remove Microsoft 365/Outlook tokens.", "Next Step": 2, Escalate: "No" },
+      { Issue: "Authentication Prompt Loop", Category: "Authentication", "Step No": 2, Title: "Reset sign-in context", Instruction: "Close Office apps, run cmdkey /list to review creds, then re-open Outlook and sign in.", "Next Step": "", Escalate: "Yes" }
     ];
 
     let tree = {};
+    let allIssues = [];
     let currentIssue = "";
     let currentStepNo = null;
     let visitedSteps = [];
-    let resolved = false;
+    let status = "In Progress";
 
-    const elements = {
+    const el = {
       excelFile: document.getElementById("excelFile"),
+      commonIssues: document.getElementById("commonIssues"),
+      issueSearch: document.getElementById("issueSearch"),
+      searchResults: document.getElementById("searchResults"),
       issueSelect: document.getElementById("issueSelect"),
       issueTitleDisplay: document.getElementById("issueTitleDisplay"),
       stepNav: document.getElementById("stepNav"),
       stepTitle: document.getElementById("stepTitle"),
       stepInstruction: document.getElementById("stepInstruction"),
+      statusBox: document.getElementById("statusBox"),
+      summaryText: document.getElementById("summaryText"),
+      stepContent: document.getElementById("stepContent"),
       btnResolved: document.getElementById("btnResolved"),
       btnContinue: document.getElementById("btnContinue"),
-      statusBox: document.getElementById("statusBox"),
-      notes: document.getElementById("notes"),
-      activityLog: document.getElementById("activityLog")
+      btnBack: document.getElementById("btnBack"),
+      btnCopyStep: document.getElementById("btnCopyStep"),
+      btnReset: document.getElementById("btnReset"),
+      btnCopySummary: document.getElementById("btnCopySummary")
     };
 
-    function toBool(value) {
-      return String(value).trim().toLowerCase() === "yes" || String(value).trim() === "1" || String(value).trim().toLowerCase() === "true";
-    }
-
     function toNumber(value) {
-      if (value === undefined || value === null || value === "") return null;
+      if (value === "" || value === null || value === undefined) return null;
       const n = Number(value);
       return Number.isFinite(n) ? n : null;
     }
 
+    function toBool(value) {
+      const text = String(value || "").trim().toLowerCase();
+      return text === "yes" || text === "true" || text === "1";
+    }
+
     function buildTree(rows) {
-      const result = {};
+      const map = {};
       rows.forEach((row) => {
         const issue = String(row.Issue || "").trim();
         const stepNo = toNumber(row["Step No"]);
         if (!issue || !stepNo) return;
 
-        if (!result[issue]) result[issue] = { steps: {} };
+        if (!map[issue]) map[issue] = { steps: {}, order: [] };
+        if (!map[issue].category) map[issue].category = String(row.Category || "General").trim() || "General";
 
-        result[issue].steps[stepNo] = {
+        map[issue].steps[stepNo] = {
           stepNo,
           title: String(row.Title || `Step ${stepNo}`).trim() || `Step ${stepNo}`,
-          instruction: String(row.Instruction || "").trim() || "No instruction provided.",
+          instruction: String(row.Instruction || "No instruction provided.").trim() || "No instruction provided.",
           nextStep: toNumber(row["Next Step"]),
           escalate: toBool(row.Escalate)
         };
       });
 
-      Object.keys(result).forEach((issue) => {
-        result[issue].order = Object.keys(result[issue].steps).map(Number).sort((a, b) => a - b);
+      Object.keys(map).forEach((issue) => {
+        map[issue].order = Object.keys(map[issue].steps).map(Number).sort((a, b) => a - b);
       });
-      return result;
+
+      return map;
     }
 
-    function logAction(action) {
-      const ts = new Date().toLocaleTimeString();
-      const item = document.createElement("li");
-      item.textContent = `[${ts}] ${action}`;
-      elements.activityLog.prepend(item);
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     }
 
-    function setStatus(message, type) {
-      elements.statusBox.textContent = message;
-      elements.statusBox.className = `status ${type}`;
-      elements.statusBox.style.display = "block";
+    function parseInstructionParts(instruction) {
+      const raw = String(instruction || "").replace(/\r/g, "").trim();
+      if (!raw) return [];
+
+      const stepSplit = raw.split(/(?:^|\n)\s*STEP\s*:\s*/i).map((part) => part.trim()).filter(Boolean);
+      if (stepSplit.length > 1) return stepSplit;
+
+      return raw
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
     }
 
-    function clearStatus() {
-      elements.statusBox.style.display = "none";
-      elements.statusBox.textContent = "";
+    function getInstructionType(line) {
+      const text = line.toLowerCase();
+      if (/\b(win|ctrl|alt|shift|cmd|option)\b\s*\+/.test(text)) return { icon: "⌨️", label: "keyboard" };
+      if (/\.exe\b|\/(safe|resetnavpane)\b|\b(cmd|powershell|regedit|ipconfig|sfc|netsh)\b/.test(text)) return { icon: "⌨️", label: "command" };
+      if (/\b(click|open|select|choose|go to|navigate)\b/.test(text)) return { icon: "🖱️", label: "click" };
+      if (/\b(type|enter|input|paste)\b/.test(text)) return { icon: "⌨️", label: "typing" };
+      return { icon: "👉", label: "action" };
     }
 
-    function currentStep() {
-      return tree[currentIssue]?.steps?.[currentStepNo] || null;
+    function styleInstructionText(text) {
+      const keyboardPattern = /\b(?:Win|Ctrl|Alt|Shift|Cmd|Option)\b(?:\s*\+\s*\b(?:Win|Ctrl|Alt|Shift|Cmd|Option|[A-Za-z0-9])\b)+/g;
+      const commandPattern = /\b(?:outlook\.exe(?:\s*\/\w+)?|powershell(?:\.exe)?|cmd(?:\.exe)?|regedit|ipconfig|sfc\s*\/scannow|netsh(?:\s+[\w-]+){1,5}|[A-Za-z0-9_.-]+\.exe(?:\s+[\/-][\w.-]+)*)\b/gi;
+
+      let html = escapeHtml(text);
+      html = html.replace(commandPattern, (m) => `<span class="cmd">${m}</span>`);
+      html = html.replace(keyboardPattern, (m) => `<span class="kbd">${m}</span>`);
+      return html;
     }
 
-    function renderStepNav() {
-      const issueData = tree[currentIssue];
-      elements.stepNav.innerHTML = "";
-      if (!issueData) return;
-
-      issueData.order.forEach((stepNo) => {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "step-chip";
-        chip.textContent = `Step ${stepNo}`;
-        if (stepNo === currentStepNo) chip.classList.add("active");
-        if (visitedSteps.includes(stepNo)) chip.classList.add("visited");
-        chip.addEventListener("click", () => {
-          if (resolved) return;
-          currentStepNo = stepNo;
-          renderCurrentStep();
-          logAction(`Step visited: ${stepNo}`);
-        });
-        elements.stepNav.appendChild(chip);
-      });
-    }
-
-    function renderCurrentStep() {
-      const step = currentStep();
-      if (!step) {
-        elements.stepTitle.textContent = "No steps available";
-        elements.stepInstruction.textContent = "Upload a valid spreadsheet or choose another issue.";
-        elements.btnResolved.disabled = true;
-        elements.btnContinue.disabled = true;
-        renderStepNav();
+    function renderInstructionBlocks(instruction) {
+      const parts = parseInstructionParts(instruction);
+      if (!parts.length) {
+        el.stepInstruction.innerHTML = `<div class="instruction-step"><span class="instruction-icon">ℹ️</span><div class="instruction-text">No instruction provided.</div></div>`;
         return;
       }
 
-      elements.stepTitle.textContent = `Step ${step.stepNo}: ${step.title}`;
-      elements.stepInstruction.textContent = step.instruction;
-      elements.btnResolved.disabled = resolved;
-      elements.btnContinue.disabled = resolved;
-      renderStepNav();
+      el.stepInstruction.innerHTML = parts
+        .map((part) => {
+          const type = getInstructionType(part);
+          return `
+            <div class="instruction-step" data-type="${type.label}">
+              <span class="instruction-icon" aria-hidden="true">${type.icon}</span>
+              <div class="instruction-text">${styleInstructionText(part)}</div>
+            </div>
+          `;
+        })
+        .join("");
     }
 
-    function startIssue(issue) {
-      currentIssue = issue;
-      elements.issueTitleDisplay.textContent = issue || "No issue selected";
-      const order = tree[currentIssue]?.order || [];
-      currentStepNo = order[0] || null;
-      visitedSteps = currentStepNo ? [currentStepNo] : [];
-      resolved = false;
-      clearStatus();
-      renderCurrentStep();
-      if (currentStepNo) logAction(`Step visited: ${currentStepNo}`);
+    function getCurrentStep() {
+      return tree[currentIssue]?.steps?.[currentStepNo] || null;
     }
 
     function nextStepFrom(step) {
       const issueData = tree[currentIssue];
       if (!issueData) return null;
       if (step.nextStep && issueData.steps[step.nextStep]) return step.nextStep;
-
-      const idx = issueData.order.indexOf(step.stepNo);
-      return idx >= 0 ? issueData.order[idx + 1] || null : null;
+      const index = issueData.order.indexOf(step.stepNo);
+      return index >= 0 ? issueData.order[index + 1] || null : null;
     }
 
-    function handleResolved() {
-      if (!currentStep()) return;
-      resolved = true;
-      setStatus("Issue marked resolved. Troubleshooting flow stopped.", "success");
-      elements.btnResolved.disabled = true;
-      elements.btnContinue.disabled = true;
-      logAction(`Resolved at Step ${currentStepNo}`);
+    function updateSummary() {
+      const issueLine = `Issue: ${currentIssue || "N/A"}`;
+      const titles = visitedSteps.map((stepNo, i) => {
+        const step = tree[currentIssue]?.steps?.[stepNo];
+        const title = step ? step.title : `Step ${stepNo}`;
+        return `${i + 1}. ${title}`;
+      });
+
+      const finalStatus = status === "Resolved" ? "Resolved" : status === "Escalated" ? "Escalated" : "In Progress";
+
+      const text = [
+        issueLine,
+        "",
+        "Steps Taken:",
+        ...(titles.length ? titles : ["(No steps taken yet)"]),
+        "",
+        `Status: ${finalStatus}`
+      ].join("\n");
+
+      el.summaryText.value = text;
     }
 
-    function handleContinue() {
-      const step = currentStep();
-      if (!step || resolved) return;
+    function issueCategory(issue) {
+      return tree[issue]?.category || "General";
+    }
 
-      logAction(`Continued from Step ${currentStepNo}`);
-      const next = nextStepFrom(step);
+    function rebuildIssueList() {
+      allIssues = Object.keys(tree).map((issue) => ({
+        issue,
+        category: issueCategory(issue)
+      }));
+    }
 
-      if (next) {
-        currentStepNo = next;
-        if (!visitedSteps.includes(next)) visitedSteps.push(next);
-        renderCurrentStep();
-        logAction(`Step visited: ${next}`);
+    function loadIssue(issue) {
+      if (!tree[issue]) return;
+      el.issueSelect.value = issue;
+      startIssue(issue);
+      el.issueSearch.value = issue;
+      el.searchResults.classList.remove("visible");
+      el.searchResults.innerHTML = "";
+    }
+
+    function findClosestIssueName(name) {
+      if (tree[name]) return name;
+      const target = String(name || "").toLowerCase();
+      return allIssues.find((item) => item.issue.toLowerCase().includes(target) || target.includes(item.issue.toLowerCase()))?.issue || "";
+    }
+
+    function highlightMatch(text, query) {
+      const safeText = escapeHtml(text);
+      const q = String(query || "").trim();
+      if (!q) return safeText;
+      const escapedQuery = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return safeText.replace(new RegExp(`(${escapedQuery})`, "ig"), '<span class="search-highlight">$1</span>');
+    }
+
+    function renderSearchResults(query) {
+      const text = String(query || "").trim().toLowerCase();
+      const issues = allIssues;
+
+      if (!text) {
+        el.searchResults.innerHTML = `<li class="search-no-results">No results found</li>`;
+        el.searchResults.classList.add("visible");
         return;
       }
 
-      if (step.escalate || !next) {
-        setStatus("Escalate to Tier 2", "escalate");
-        elements.btnResolved.disabled = true;
-        elements.btnContinue.disabled = true;
-        logAction("Unresolved after final step - Escalate to Tier 2");
+      const filtered = text
+        ? issues.filter((item) => {
+            return item.issue.toLowerCase().includes(text) || item.category.toLowerCase().includes(text);
+          })
+        : issues;
+
+      el.searchResults.innerHTML = "";
+      if (!filtered.length) {
+        el.searchResults.innerHTML = `<li class="search-no-results">No results found</li>`;
+        el.searchResults.classList.add("visible");
+        return;
       }
+
+      filtered.slice(0, 20).forEach((issueItem) => {
+        const listItem = document.createElement("li");
+        listItem.className = "search-result-item";
+        listItem.innerHTML = `<div class="search-result-title">${highlightMatch(issueItem.issue, text)}</div><div class="search-result-category">Category: ${highlightMatch(issueItem.category, text)}</div>`;
+        listItem.addEventListener("click", () => loadIssue(issueItem.issue));
+        el.searchResults.appendChild(listItem);
+      });
+      el.searchResults.classList.add("visible");
     }
 
-    async function copyText(text, label) {
+    function setStatus(message, type) {
+      el.statusBox.textContent = message;
+      el.statusBox.className = `status ${type}`;
+      el.statusBox.style.display = "block";
+    }
+
+    function clearStatus() {
+      el.statusBox.style.display = "none";
+      el.statusBox.textContent = "";
+    }
+
+    function renderStepNav() {
+      el.stepNav.innerHTML = "";
+      const issueData = tree[currentIssue];
+      if (!issueData) return;
+
+      issueData.order.forEach((stepNo) => {
+        const pill = document.createElement("button");
+        pill.type = "button";
+        pill.className = "step-pill";
+        pill.textContent = `Step ${stepNo}`;
+        if (stepNo === currentStepNo) pill.classList.add("active");
+        if (visitedSteps.includes(stepNo) && stepNo !== currentStepNo) pill.classList.add("completed");
+        pill.addEventListener("click", () => {
+          if (status !== "In Progress") return;
+          animateStepTransition();
+          currentStepNo = stepNo;
+          if (!visitedSteps.includes(stepNo)) visitedSteps.push(stepNo);
+          renderCurrentStep();
+          updateSummary();
+        });
+        el.stepNav.appendChild(pill);
+      });
+    }
+
+    function updateButtons() {
+      const active = status === "In Progress";
+      el.btnResolved.disabled = !active;
+      el.btnContinue.disabled = !active;
+      el.btnBack.disabled = visitedSteps.length <= 1 || !active;
+    }
+
+    function renderCurrentStep() {
+      const step = getCurrentStep();
+      if (!step) {
+        el.stepTitle.textContent = "No step available";
+        renderInstructionBlocks("Upload a valid spreadsheet with required columns or select another issue.");
+        triggerStepFadeIn();
+        updateButtons();
+        renderStepNav();
+        return;
+      }
+
+      el.stepTitle.textContent = `Step ${step.stepNo}: ${step.title}`;
+      renderInstructionBlocks(step.instruction);
+      triggerStepFadeIn();
+      updateButtons();
+      renderStepNav();
+    }
+
+    function triggerStepFadeIn() {
+      el.stepContent.classList.remove("entering");
+      void el.stepContent.offsetWidth;
+      el.stepContent.classList.add("entering");
+    }
+
+    function animateStepTransition() {
+      el.stepContent.classList.add("animating");
+      window.setTimeout(() => {
+        el.stepContent.classList.remove("animating");
+      }, 170);
+    }
+
+    function startIssue(issue) {
+      currentIssue = issue;
+      status = "In Progress";
+      clearStatus();
+      el.issueTitleDisplay.textContent = issue || "No issue selected";
+
+      const first = tree[currentIssue]?.order?.[0] || null;
+      currentStepNo = first;
+      visitedSteps = first ? [first] : [];
+
+      renderCurrentStep();
+      updateSummary();
+    }
+
+    function finalizeAsResolved() {
+      if (!getCurrentStep() || status !== "In Progress") return;
+      status = "Resolved";
+      setStatus("Issue resolved. Troubleshooting flow stopped.", "resolved");
+      updateButtons();
+      updateSummary();
+    }
+
+    function continueFlow() {
+      const step = getCurrentStep();
+      if (!step || status !== "In Progress") return;
+
+      const next = nextStepFrom(step);
+      if (next) {
+        animateStepTransition();
+        currentStepNo = next;
+        if (!visitedSteps.includes(next)) visitedSteps.push(next);
+        renderCurrentStep();
+        updateSummary();
+        return;
+      }
+
+      status = "Escalated";
+      setStatus("Escalate to Tier 2", "escalated");
+      updateButtons();
+      updateSummary();
+    }
+
+    function goBack() {
+      if (status !== "In Progress" || visitedSteps.length <= 1) return;
+      animateStepTransition();
+      visitedSteps.pop();
+      currentStepNo = visitedSteps[visitedSteps.length - 1] || currentStepNo;
+      renderCurrentStep();
+      updateSummary();
+    }
+
+    function resetFlow() {
+      startIssue(currentIssue);
+    }
+
+    async function copyText(text) {
       try {
         await navigator.clipboard.writeText(text);
-        logAction(`${label} copied to clipboard`);
       } catch {
         const temp = document.createElement("textarea");
         temp.value = text;
@@ -462,116 +821,88 @@
         temp.select();
         document.execCommand("copy");
         document.body.removeChild(temp);
-        logAction(`${label} copied to clipboard (fallback)`);
       }
     }
 
-    function downloadFile(filename, content, mime) {
-      const blob = new Blob([content], { type: mime });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function exportSessionJson() {
-      const payload = {
-        exportedAt: new Date().toISOString(),
-        user: {
-          username: document.getElementById("username").value,
-          platform: document.getElementById("platform").value,
-          environment: document.getElementById("environment").value
-        },
-        issue: currentIssue,
-        currentStep: currentStepNo,
-        visitedSteps,
-        resolved,
-        notes: elements.notes.value,
-        activityLog: Array.from(elements.activityLog.querySelectorAll("li")).map((li) => li.textContent)
-      };
-      downloadFile("outlook_session.json", JSON.stringify(payload, null, 2), "application/json");
-      logAction("Session exported as JSON");
-    }
-
-    function exportNotesTxt() {
-      const lines = [
-        "M365 / Outlook Guided Resolution",
-        `Exported: ${new Date().toLocaleString()}`,
-        `Issue: ${currentIssue}`,
-        `Current Step: ${currentStepNo || "N/A"}`,
-        "",
-        "Technician Notes:",
-        elements.notes.value || "(no notes)",
-        "",
-        "Visited Steps:",
-        visitedSteps.join(", ") || "None"
-      ];
-      downloadFile("outlook_notes.txt", lines.join("\n"), "text/plain");
-      logAction("Notes exported as TXT");
+    async function copyCurrentStep() {
+      const step = getCurrentStep();
+      if (!step) return;
+      await copyText(`Issue: ${currentIssue}\nStep ${step.stepNo}: ${step.title}\nInstruction: ${step.instruction}`);
     }
 
     function populateIssueSelector() {
-      const issues = Object.keys(tree);
-      elements.issueSelect.innerHTML = "";
+      rebuildIssueList();
+      const issues = allIssues.map((item) => item.issue);
+      el.issueSelect.innerHTML = "";
       issues.forEach((issue) => {
         const option = document.createElement("option");
         option.value = issue;
-        option.textContent = issue;
-        elements.issueSelect.appendChild(option);
+        option.textContent = `${issue} (${issueCategory(issue)})`;
+        el.issueSelect.appendChild(option);
       });
       startIssue(issues[0] || "");
+      el.issueSearch.value = "";
+      renderSearchResults("");
     }
 
     async function handleFileUpload(file) {
       if (!file) return;
+      if (typeof XLSX === "undefined") {
+        throw new Error("SheetJS is unavailable");
+      }
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data, { type: "array" });
       const ws = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
       tree = buildTree(rows);
       populateIssueSelector();
-      logAction(`Excel loaded: ${file.name}`);
     }
 
-    elements.btnResolved.addEventListener("click", handleResolved);
-    elements.btnContinue.addEventListener("click", handleContinue);
-
-    elements.issueSelect.addEventListener("change", (e) => {
-      startIssue(e.target.value);
-      logAction(`Issue changed: ${e.target.value}`);
+    el.issueSelect.addEventListener("change", (event) => loadIssue(event.target.value));
+    el.commonIssues.addEventListener("click", (event) => {
+      const card = event.target.closest(".issue-card");
+      if (!card) return;
+      const issueName = card.dataset.issue || "";
+      const match = findClosestIssueName(issueName);
+      if (match) {
+        loadIssue(match);
+      } else {
+        setStatus(`Issue not found in active decision tree: ${issueName}`, "escalated");
+      }
     });
-
-    elements.excelFile.addEventListener("change", (e) => {
-      handleFileUpload(e.target.files[0]).catch((err) => {
-        logAction(`Excel load failed: ${err.message}`);
-        setStatus("Unable to read Excel file. Ensure the first sheet has required columns.", "escalate");
+    el.issueSearch.addEventListener("input", (event) => renderSearchResults(event.target.value));
+    el.issueSearch.addEventListener("focus", () => {
+      if (!el.issueSearch.value.trim()) {
+        renderSearchResults("");
+      }
+    });
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".search-panel")) {
+        el.searchResults.classList.remove("visible");
+      }
+    });
+    el.excelFile.addEventListener("change", (event) => {
+      handleFileUpload(event.target.files[0]).catch(() => {
+        status = "Escalated";
+        setStatus("Unable to parse Excel. Ensure columns: Issue | Step No | Title | Instruction | Next Step | Escalate", "escalated");
+        updateButtons();
+        updateSummary();
       });
     });
 
-    document.getElementById("copyNotes").addEventListener("click", () => {
-      copyText(elements.notes.value || "", "Notes");
-    });
-
-    document.getElementById("copySteps").addEventListener("click", () => {
-      const issueData = tree[currentIssue];
-      if (!issueData) return;
-      const text = issueData.order
-        .map((num) => {
-          const s = issueData.steps[num];
-          return `Step ${num}: ${s.title}\n${s.instruction}`;
-        })
-        .join("\n\n");
-      copyText(text, "Steps");
-    });
-
-    document.getElementById("exportJson").addEventListener("click", exportSessionJson);
-    document.getElementById("exportTxt").addEventListener("click", exportNotesTxt);
+    el.btnResolved.addEventListener("click", finalizeAsResolved);
+    el.btnContinue.addEventListener("click", continueFlow);
+    el.btnBack.addEventListener("click", goBack);
+    el.btnReset.addEventListener("click", resetFlow);
+    el.btnCopyStep.addEventListener("click", copyCurrentStep);
+    el.btnCopySummary.addEventListener("click", () => copyText(el.summaryText.value));
 
     tree = buildTree(defaultRows);
     populateIssueSelector();
-    logAction("Default decision tree loaded");
+    window.setTimeout(() => {
+      el.issueSearch.focus();
+      el.issueSearch.select();
+    }, 0);
   </script>
 </body>
 </html>
